@@ -2,7 +2,7 @@
 
 ## Instance 1: HTML/Jinja Template Generation
 
-**1. The Tool:** Gemini 3.1 Pro
+**1. The Tool:** Gemini 3.1
 
 **2. The Prompt:** "Connect them" (Context: Requested the AI to connect the previously generated `app.py` Flask server to the `database.py` SQLite database and generate the frontend HTML skeleton).
 
@@ -12,4 +12,14 @@
 
 **4. Your Modification:** I reviewed the generated HTML structure to ensure it properly referenced the specific columns from my 3rd Normal Form (3NF) database schema (`event_name`, `event_date`, `ticket_price`). I verified that the Jinja2 variables matched the SQL dictionary keys passed from the Flask backend. (Note: I also had to troubleshoot a directory naming issue, ensuring the folder was named `templates` instead of `template` for Flask to correctly route the HTML).
 
+## Instance 2: Dashboard Frontend Generation (HTML/Jinja)
 
+**1. The Tool:** Gemini 3.1
+
+**2. The Prompt:** "Here is my Flask backend code for the `/dashboard` route containing my SQL aggregation queries (COUNT, SUM, AVG). Can you write the `dashboard.html` template using Bootstrap and Jinja to display these metrics, and update my `base.html` nav bar to link to the new page?"
+
+**3. AI Output:** The AI generated the frontend templates required to display the dashboard data. 
+* It updated the existing `base.html` to include a navigation link to the `/dashboard` route.
+* It created a new `dashboard.html` file that extended the base template. It used Bootstrap cards to display the top-level aggregate statistics (`total_tickets`, `total_revenue`, and `avg_ticket_price`) and generated an HTML table utilizing a Jinja `{% for event in event_stats %}` loop to display the revenue breakdown per event.
+
+**4. Your Modification:** I reviewed the generated HTML to ensure the Jinja variable names exactly matched the dictionary keys returned by my custom SQLite `row_factory` backend queries. I also verified that the formatting filters (like `|format`) were correctly applied to the currency values. Once I tested it out and it looked fine I left it alone.
