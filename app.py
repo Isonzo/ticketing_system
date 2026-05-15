@@ -111,6 +111,36 @@ def buy_ticket():
 
     return render_template('buy_ticket.html', users=users, events=events, error=error_message)
 
+@app.route('/add_user', methods=['GET', 'POST'])
+def add_user():
+    error_message = None
+    success_message = None
+
+    if request.method == 'POST':
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        email = request.form.get('email')
+
+        if not first_name or not last_name or not email:
+            error_message = "All fields are required."
+        else:
+            conn = get_db_connection()
+            try:
+                # Attempt to insert the new user
+                conn.execute('''
+                    INSERT INTO Users (first_name, last_name, email)
+                    VALUES (?, ?, ?)
+                ''', (first_name, last_name, email))
+                conn.commit()
+                success_message = f"User {first_name} {last_name} added successfully!"
+            except sqlite3.IntegrityError:
+                # email is unique!
+                error_message = "A user with that email address already exists."
+            finally:
+                conn.close()
+
+    return render_template('add_user.html', error=error_message, success=success_message)
+
 # Run the application in debug mode
 if __name__ == '__main__':
     # Debug=True means the server will auto-reload upon change

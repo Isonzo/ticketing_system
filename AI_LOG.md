@@ -35,3 +35,16 @@
 * It updated the Flask `/buy` route to fetch the true `ticket_price` from the `Events` table using a parameterized SQL query before executing the multi-step `BEGIN TRANSACTION` block.
 
 **4. Your Modification:** I originally designed a basic form where the user input the base price manually. However, I independently identified that allowing the frontend to dictate the price was a massive security vulnerability (client-side manipulation) and that forcing users to memorize IDs was poor UX. I explicitly directed the AI to redesign the template using dynamic dropdowns and I rewrote the backend flow to securely query my 3NF database for the true price, completely closing the security loophole before committing the transaction.
+
+## Instance 4: "Add User" HTML
+
+**1. The Tool:** Gemini 3.1
+
+**2. The Prompt:** "I wrote a Flask route (`/add_user`) that handles GET and POST requests to safely insert a new user into my SQLite database. My backend handles the `UNIQUE` constraint on the email column and passes either an `error` or `success` message to the template. Can you write the `add_user.html` template using Bootstrap 5 to capture `first_name`, `last_name`, and `email`, and show me how to link it in my `base.html` nav bar?"
+
+**3. AI Output:** The AI generated the HTML form and navigation update.
+* It created `add_user.html` extending the base layout, containing a Bootstrap card with inputs for the three required fields.
+* It included Jinja conditional blocks (`{% if error %}` and `{% if success %}`) to dynamically render Bootstrap alert banners based on the variables passed from my backend route.
+* It provided the HTML snippet to add an "Add User" link to the `base.html` navigation bar.
+
+**4. Your Modification:** I integrated the template into my project and verified that the HTML `name` attributes perfectly matched the variable names I set in my `request.form.get()` Python backend logic. I then ran comprehensive testing on the UI, purposefully attempting to add a user with a duplicate email to ensure my custom Python `sqlite3.IntegrityError` logic correctly triggered the AI-generated error alert banner on the frontend.
