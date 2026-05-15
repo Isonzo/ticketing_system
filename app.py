@@ -1,5 +1,5 @@
 import sqlite3
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -50,6 +50,66 @@ def dashboard():
     conn.close()
     
     return render_template('dashboard.html', stats=overall_stats, event_stats=event_stats)
+
+@app.route('/buy', methods=['GET', 'POST'])
+def buy_ticket():
+    error_message = None
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        # Fetch form data (Notice we no longer ask for the price!)
+        user_id_str = request.form.get('user_id')
+        event_id_str = request.form.get('event_id')
+
+        if not user_id_str or not event_id_str:
+            error_message = "Please select both a user and an event."
+        else:
+            try:
+                user_id = int(user_id_str)
+                event_id = int(event_id_str)
+                
+                # Securely fetch the true base price from the database
+                event = conn.execute('SELECT ticket_price FROM Events WHERE event_id = ?', (event_id,)).fetchone()
+                
+                if not event:
+                    error_message = "Invalid event selected."
+                else:
+                    # The server dictates the price, not the user!
+                    base_price = event['ticket_price']
+                    tax_amount = base_price * 0.10 
+                    
+                    # Transaction Logic
+                    try:
+                        conn.execute('BEGIN TRANSACTION')
+                        
+                        conn.execute('''
+                            INSERT INTO Tickets (user_id, event_id, purchase_date, base_price, tax_amount, record_inserted_by)
+                            VALUES (?, ?, date('now'), ?, ?, 'web_user')
+                        ''', (user_id, event_id, base_price, tax_amount))
+                        
+                        conn.execute('''
+                            UPDATE Events 
+                            SET last_updated_at = CURRENT_TIMESTAMP 
+                            WHERE event_id = ?
+                        ''', (event_id,))
+                        
+                        conn.commit()
+                        conn.close()
+                        return redirect('/dashboard')
+                        
+                    except sqlite3.Error as e:
+                        conn.rollback()
+                        error_message = f"Database error during transaction: {e}"
+
+            except ValueError:
+                error_message = "Invalid input detected."
+
+    # For GET requests: Fetch lists to populate our dropdown menus
+    users = conn.execute('SELECT user_id, first_name, last_name FROM Users').fetchall()
+    events = conn.execute('SELECT event_id, event_name, ticket_price FROM Events').fetchall()
+    conn.close()
+
+    return render_template('buy_ticket.html', users=users, events=events, error=error_message)
 
 # Run the application in debug mode
 if __name__ == '__main__':

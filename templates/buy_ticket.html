@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Buy a Ticket</h4>
+            </div>
+            <div class="card-body">
+                
+                {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+                {% endif %}
+
+                <form method="POST" action="/buy">
+                    
+                    <div class="mb-3">
+                        <label for="user_id" class="form-label">Select Purchaser</label>
+                        <select class="form-select" id="user_id" name="user_id" required>
+                            <option value="" disabled selected>Choose a user...</option>
+                            {% for user in users %}
+                                <option value="{{ user['user_id'] }}">{{ user['first_name'] }} {{ user['last_name'] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="event_id" class="form-label">Select Event</label>
+                        <select class="form-select" id="event_id" name="event_id" required>
+                            <option value="" disabled selected>Choose an event...</option>
+                            {% for event in events %}
+                                <option value="{{ event['event_id'] }}">
+                                    {{ event['event_name'] }} - ${{ "%.2f"|format(event['ticket_price']) }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">A 10% tax will be calculated and applied automatically at checkout.</div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success w-100">Confirm Purchase</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
