@@ -111,11 +111,13 @@ def buy_ticket():
 
     return render_template('buy_ticket.html', users=users, events=events, error=error_message)
 
-@app.route('/add_user', methods=['GET', 'POST'])
-def add_user():
+@app.route('/users', methods=['GET', 'POST'])
+def manage_users():
     error_message = None
     success_message = None
+    conn = get_db_connection()
 
+    # Handle adding a new user
     if request.method == 'POST':
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
@@ -124,9 +126,7 @@ def add_user():
         if not first_name or not last_name or not email:
             error_message = "All fields are required."
         else:
-            conn = get_db_connection()
             try:
-                # Attempt to insert the new user
                 conn.execute('''
                     INSERT INTO Users (first_name, last_name, email)
                     VALUES (?, ?, ?)
@@ -134,12 +134,49 @@ def add_user():
                 conn.commit()
                 success_message = f"User {first_name} {last_name} added successfully!"
             except sqlite3.IntegrityError:
-                # email is unique!
                 error_message = "A user with that email address already exists."
-            finally:
-                conn.close()
 
-    return render_template('add_user.html', error=error_message, success=success_message)
+    # Fetch all users to display in the directory
+    users = conn.execute('SELECT * FROM Users ORDER BY last_name ASC').fetchall()
+    conn.close()
+
+    return render_template('users.html', users=users, error=error_message, success=success_message)
+
+# For viewing a user's tickets
+@app.route('/user/<int:user_id>')
+def user_profile(user_id):
+    conn = get_db_connection()
+    user = conn.execute('SELECT * FROM Users WHERE user_id = ?', (user_id,)).fetchone()
+    
+    # Fetch all tickets belonging to this specific user (One-to-Many)
+    tickets = conn.execute('''
+        SELECT t.ticket_id, e.event_name, t.purchase_date, t.base_price, t.tax_amount 
+        FROM Tickets t
+        JOIN Events e ON t.event_id = e.event_id
+        WHERE t.user_id = ?
+        ORDER BY t.purchase_date DESC
+    ''', (user_id,)).fetchall()
+    conn.close()
+    
+    if user is None:
+        return "User not found", 404
+        
+    return render_template('user_profile.html', user=user, tickets=tickets)
+
+# Deleting tickets from a user
+@app.route('/delete_ticket/<int:ticket_id>', methods=['POST'])
+def delete_ticket(ticket_id):
+    conn = get_db_connection()
+    # Find who the ticket belongs to so we can redirect them back to their profile
+    ticket = conn.execute('SELECT user_id FROM Tickets WHERE ticket_id = ?', (ticket_id,)).fetchone()
+    
+    if ticket:
+        user_id = ticket['user_id']
+        conn.execute('DELETE FROM Tickets WHERE ticket_id = ?', (ticket_id,))
+        conn.commit()
+    conn.close()
+    
+    return redirect(f'/user/{user_id}')
 
 # Run the application in debug mode
 if __name__ == '__main__':

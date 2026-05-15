@@ -48,3 +48,13 @@
 * It provided the HTML snippet to add an "Add User" link to the `base.html` navigation bar.
 
 **4. Your Modification:** I integrated the template into my project and verified that the HTML `name` attributes perfectly matched the variable names I set in my `request.form.get()` Python backend logic. I then ran comprehensive testing on the UI, purposefully attempting to add a user with a duplicate email to ensure my custom Python `sqlite3.IntegrityError` logic correctly triggered the AI-generated error alert banner on the frontend.
+
+## Instance 5: Relationship View Template & Debugging (HTML/Jinja)
+
+**1. The Tool:** Gemini 3.1
+
+**2. The Prompt:** "I need to build the 'Relationship Management' view (showing all tickets for a specific user) and a 'Delete' function. Can you provide the Flask routes and Jinja template to display a user's tickets? *(Follow-up prompt after testing)*: I am getting an error saying there is no attribute 'ticket_amount' when clicking profiles."
+
+**3. AI Output:** The AI generated the backend routes and the `user_profile.html` template. However, the AI made a critical error in the Jinja templating. When attempting to dynamically calculate the total price in the HTML table, it hallucinated a column name, writing `{{ ticket['base_price'] + ticket['ticket_amount'] }}`. 
+
+**4. Your Modification:** I implemented the code but immediately caught the rendering error during my UI testing. I cross-referenced the error with my `schema.sql` and identified the AI's mistake, which was using (`ticket_amount`) as a column. I manually debugged and corrected the Jinja template to use the accurate 3NF schema column (`tax_amount`), updating the line to `{{ "%.2f"|format(ticket['base_price'] + ticket['tax_amount']) }}`. This fixed the application and ensured the dynamic pricing calculation worked perfectly.

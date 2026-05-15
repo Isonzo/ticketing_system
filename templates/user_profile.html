@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2>{{ user['first_name'] }} {{ user['last_name'] }}'s Profile</h2>
+        <p class="text-muted">Email: {{ user['email'] }}</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h4>My Tickets</h4>
+        {% if tickets %}
+        <table class="table table-bordered bg-white shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Ticket ID</th>
+                    <th>Event</th>
+                    <th>Purchase Date</th>
+                    <th>Total Paid</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td>#{{ ticket['ticket_id'] }}</td>
+                    <td>{{ ticket['event_name'] }}</td>
+                    <td>{{ ticket['purchase_date'] }}</td>
+                    <td>${{ "%.2f"|format(ticket['base_price'] + ticket['tax_amount']) }}</td>
+                    <td>
+                        <form method="POST" action="/delete_ticket/{{ ticket['ticket_id'] }}">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this ticket?');">Cancel Ticket</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info">This user has not purchased any tickets yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
